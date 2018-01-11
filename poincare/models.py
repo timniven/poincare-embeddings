@@ -1,7 +1,7 @@
 """Models for training."""
 import torch
 from torch import nn
-from poincare_embeddings import func, util
+from poincare import func, util
 import numpy as np
 import random
 
