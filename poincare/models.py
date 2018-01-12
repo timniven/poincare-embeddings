@@ -47,7 +47,7 @@ class TextModel(nn.Module):
         """Fit the model.
 
         Args:
-          data: poincare.data.Sampler() class exposing a new_epoch() function
+          data: poincare.sampling.Sampler() exposing a new_epoch() function
             that returns a list of (u_ix, v_ix, neg_ixs) for each training
             sample.
           n_epochs: Integer, the number of epochs to train for. Default is 100.

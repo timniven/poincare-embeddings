@@ -22,6 +22,19 @@ from poincare import PKL
 import numpy as np
 
 
+def adjacency_name(dataset_name, directed):
+    """Utility function to get adjacency matrix name.
+
+    Args:
+      dataset_name: String.
+      directed: Bool.
+
+    Returns:
+      String.
+    """
+    return '%s_adj_%s' % (dataset_name, 'd' if directed else 'u')
+
+
 def create_adjacency(dataset_name, directed=True):
     """Create the adjacency matrix.
 
@@ -39,16 +52,22 @@ def create_adjacency(dataset_name, directed=True):
     Returns:
       numpy.ndarray.
     """
+    print('Creating %s adjacency matrix for %s...'
+          % ('directed' if directed else 'undirected', dataset_name))
+    print('Getting data and vocab...')
     data = get_df(dataset_name)
     vocab = get_vocab_dict(dataset_name)
     n_words = len(vocab)
     adj_mat = np.zeros((n_words, n_words), 'int32')
+    print('Determining edges...')
     for i, row in data.iterrows():
         child_ix, parent_ix = vocab[row[0]], vocab[row[1]]
         adj_mat[child_ix, parent_ix] = 1
         if not directed:
             adj_mat[parent_ix, child_ix] = 1
-    PKL.save(adj_mat, '%s_adj' % dataset_name)
+    print('Saving...')
+    PKL.save(adj_mat, adjacency_name(dataset_name, directed))
+    print('Success.')
     return adj_mat
 
 
@@ -86,19 +105,23 @@ def dataset_file_path(dataset_name):
     return os.path.join(glovar.DATA_DIR, '%s.csv' % dataset_name)
 
 
-def get_adjacency(dataset_name):
+def get_adjacency(dataset_name, directed):
     """Get the adjacency matrix.
 
-    This one won't create if not found (since args required: directed) and will
-    therefore raise an exception if not found.
+    Will create if not found.
 
     Args:
       dataset_name: String.
+      directed: Bool.
 
     Returns:
       numpy.ndarray.
     """
-    return PKL.load(dataset_name + '_adj')
+    name = adjacency_name(dataset_name, directed)
+    if PKL.exists(name):
+        return PKL.load(name)
+    else:
+        return create_adjacency(dataset_name, directed)
 
 
 def get_df(dataset_name):
