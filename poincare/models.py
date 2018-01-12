@@ -54,7 +54,7 @@ class TextModel(nn.Module):
           lr: Float, starting learning rate. Default is 0.2. Will be annealed
             by the formula (1 / (1 + beta * epoch)) * lr.
           beta: Float, learning rate decay factor (see lr above). Default 0.01.
-          report: Bool, whether or not to report loss with each sample.
+          report: Bool, whether or not to report average loss with each epoch.
 
         Returns:
           Tensor: embeddings.
