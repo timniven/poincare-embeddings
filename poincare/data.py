@@ -22,38 +22,40 @@ from poincare import PKL
 import numpy as np
 
 
-def adjacency_name(dataset_name, directed):
+def adjacency_name(dataset_name, mode):
     """Utility function to get adjacency matrix name.
 
     Args:
       dataset_name: String.
-      directed: Bool.
+      mode: String in {up, down, both}, determining the nature of the graph.
 
     Returns:
       String.
     """
-    return '%s_adj_%s' % (dataset_name, 'd' if directed else 'u')
+    return '%s_adj_%s' % (dataset_name, mode)
 
 
-def create_adjacency(dataset_name, directed=True):
+def create_adjacency(dataset_name, mode):
     """Create the adjacency matrix.
 
     Should already have the data and vocab dict in data/ folder for the dataset.
 
-    We imagine the arrows are going up the tree. When confronted with a child,
-    parent pair, we say the edge goes from child to parent, an "is-a" relation.
-    For
+    As for mode, we have:
+      up: directed edges from children to parents.
+      down: directed edges from parents to children.
+      both: undirected edges (i.e. an edge going both ways).
 
     Args:
       dataset_name: String.
-      directed: Bool. If true we only include directed edges. If False we will
-        add edges between both nodes for each relationship.
+      mode: String in {up, down, both}, determining the nature of the graph.
 
     Returns:
       numpy.ndarray.
+
+    Raises:
+      ValueError if mode not in {up, down, both}.
     """
-    print('Creating %s adjacency matrix for %s...'
-          % ('directed' if directed else 'undirected', dataset_name))
+    print('Creating %s mode adjacency matrix for %s...' % (mode, dataset_name))
     print('Getting data and vocab...')
     data = get_df(dataset_name)
     vocab = get_vocab_dict(dataset_name)
@@ -62,11 +64,17 @@ def create_adjacency(dataset_name, directed=True):
     print('Determining edges...')
     for i, row in data.iterrows():
         child_ix, parent_ix = vocab[row[0]], vocab[row[1]]
-        adj_mat[child_ix, parent_ix] = 1
-        if not directed:
+        if mode == 'up':
+            adj_mat[child_ix, parent_ix] = 1
+        elif mode == 'down':
             adj_mat[parent_ix, child_ix] = 1
+        elif mode == 'both':
+            adj_mat[child_ix, parent_ix] = 1
+            adj_mat[parent_ix, child_ix] = 1
+        else:
+            raise ValueError('Unexpected mode %r' % mode)
     print('Saving...')
-    PKL.save(adj_mat, adjacency_name(dataset_name, directed))
+    PKL.save(adj_mat, adjacency_name(dataset_name, mode))
     print('Success.')
     return adj_mat
 
@@ -105,23 +113,23 @@ def dataset_file_path(dataset_name):
     return os.path.join(glovar.DATA_DIR, '%s.csv' % dataset_name)
 
 
-def get_adjacency(dataset_name, directed):
+def get_adjacency(dataset_name, mode):
     """Get the adjacency matrix.
 
     Will create if not found.
 
     Args:
       dataset_name: String.
-      directed: Bool.
+      mode: String in {up, down, both}, determining the nature of the graph.
 
     Returns:
       numpy.ndarray.
     """
-    name = adjacency_name(dataset_name, directed)
+    name = adjacency_name(dataset_name, mode)
     if PKL.exists(name):
         return PKL.load(name)
     else:
-        return create_adjacency(dataset_name, directed)
+        return create_adjacency(dataset_name, mode)
 
 
 def get_df(dataset_name):
