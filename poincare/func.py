@@ -1,4 +1,9 @@
-"""Mathematical functions."""
+"""Mathematical functions.
+
+Credit due here:
+https://github.com/TatsuyaShirakawa
+https://github.com/qiangsiwei/poincare_embedding (also based on the first)
+"""
 import torch
 
 
@@ -20,7 +25,8 @@ def poincare_distance(u, v):
     """Poincaré distance between two vectors.
 
     Expecting vectors that are two-dimensional. This is to allow for the case
-    of comparing a set of vectors in a matrix.
+    of comparing a set of vectors in a matrix, vectorizing the implementation of
+    negative samples.
 
     .. math::
         d(u, v) = \arcosh
@@ -28,6 +34,10 @@ def poincare_distance(u, v):
             1 + 2 \frac{\|u - v\|^2}
                        {(1 - \|u\|^2)(1 - \|v\|^2)}
         \right)
+
+    THOUGHTS:
+    - Seems hacky to have to clamp values; makes me wonder if there is a better
+      way to calculate all this.
 
     Args:
       u: torch.FloatTensor, always a column vector (2 dimensions).
@@ -45,6 +55,6 @@ def poincare_distance(u, v):
     alpha = (1 - uu).clamp(min=EPS, max=1-EPS)
     beta = (1 - vv).clamp(min=EPS, max=1-EPS)
     # remembering that the domain of arcosh is [1, +inf]
-    gamma = (1 + 2 * numerator / alpha / beta).clamp(min=1+EPS)
+    gamma = (1 + 2 * numerator / alpha / beta).clamp(min=1.)
     distance = arcosh(gamma)
     return distance
