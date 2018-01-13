@@ -106,4 +106,4 @@ class Pickler:
           obj: Object.
           name: String. Should NOT have .pkl at the end.
         """
-        save(obj, self.pkl_dir, name)
+        save(obj, self.pkl_dir, name + '.pkl')

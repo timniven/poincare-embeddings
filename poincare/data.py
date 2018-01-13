@@ -93,7 +93,7 @@ def create_vocab_dict(dataset_name):
     """
     print('Creating vocab dictionary for %s' % dataset_name)
     df = get_df(dataset_name)
-    words = set(df['child'].values + df['parent'].values())
+    words = set(df['child'].values + df['parent'].values)
     vocab = dict(zip(words, range(len(words))))
     print('Pickling...')
     PKL.save(vocab, '%s_vocab' % dataset_name)
