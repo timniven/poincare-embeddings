@@ -26,8 +26,8 @@ Implementation Notes
 
 For memory's sake, the data is stored in bins indexed by the first two
 letters of the words. In each bin we have a record looking like:
-    {'word': {'hyper': [ixs of word's hypernyms]},
-             {'hypo': [ixs of word's hyponyms]}}
+    {'word': {'up': [ixs of word's hypernyms]},
+             {'down': [ixs of word's hyponyms]}}
 
 Our algorithm is then as follows. For each U:
   neg_ixs = [u_ix]

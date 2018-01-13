@@ -97,10 +97,23 @@ class Collator:
         return u, v, self.sampler(u)
 
 
-def get_data_loader(dataset, collator):
+def get_data_loader(dataset, collator, batch_size=1, shuffle=False):
+    """Get a DataLoader.
+
+    Args:
+      dataset: torch.utils.data.dataset.Dataset.
+      collator: collate function.
+      batch_size: Integer, defaults to 1.
+      shuffle: Bool, whether to shuffle. Defaulted to False since I implemented
+        this logic in the Dataset class above to account for the chunking and
+        memory management.
+
+    Returns:
+      torch.utils.data.dataloader.DataLoader
+    """
     return dataloader.DataLoader(
         dataset,
-        1,
-        shuffle=True,
+        batch_size,
+        shuffle=False,
         num_workers=4,
         collate_fn=collator)
