@@ -7,7 +7,7 @@ Notes:
 - My convention is to store the pairwise relation data in .csv files. From there
   poincare.data is used to transform, sample, etc. The file should have the
   form dataset_name.csv. So here, wordnet.csv is the output. And this file lives
-  in glovar.DATA_DIR.
+  in glovar.DATA_DIR/wordnet/.
 """
 
 from nltk.corpus import wordnet as wn

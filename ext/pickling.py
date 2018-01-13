@@ -42,23 +42,25 @@ def load(pkl_dir, pkl_name, sub_dirs=None):
         raise Exception('Pickle not found: %s' % path)
 
 
-def pkl_path(pkl_dir, name, sub_dirs=None):
+def pkl_path(pkl_dir, pkl_name, sub_dirs=None):
     """Helper function for file paths.
 
     Args:
       pkl_dir: String, the base directory.
-      name: String, file name without .pkl.
+      pkl_name: String, file name with .pkl.
       sub_dirs: List of String subdirectories to append after the pkl_dir and
         before the name. Defaults to None.
 
     Returns:
       String.
     """
-    return os.path.join(pkl_dir, '/'.join(sub_dirs), name + '.pkl')
+    return os.path.join(pkl_dir, '/'.join(sub_dirs), pkl_name)
 
 
 def save(obj, pkl_dir, pkl_name, sub_dirs=None):
     """Save a pickle.
+
+    Will create subfolders as necessary.
 
     Args:
       obj: Object, the object to pickle.
@@ -68,6 +70,7 @@ def save(obj, pkl_dir, pkl_name, sub_dirs=None):
         before the name. Defaults to None.
     """
     path = pkl_path(pkl_dir, pkl_name, sub_dirs)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, 'wb') as file:
         pickle.dump(obj, file)
 

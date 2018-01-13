@@ -1,5 +1,8 @@
 # Project specific
 data/wordnet/
+data/testdata/
+scratch.py
+scratch2.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
