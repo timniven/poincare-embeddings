@@ -3,25 +3,29 @@ import pickle
 import os
 
 
-def exists(pkl_dir, pkl_name):
+def exists(pkl_dir, pkl_name, sub_dirs=None):
     """Check if a pickle exists.
 
     Args:
       pkl_dir: String, the directory in which to save the pickle.
       pkl_name: String, the file_name for the pickle.
+      sub_dirs: List of String subdirectories to append after the pkl_dir and
+        before the name. Defaults to None.
 
     Returns:
       Boolean.
     """
-    return os.path.exists(os.path.join(pkl_dir, pkl_name))
+    return os.path.exists(pkl_path(pkl_dir, pkl_name, sub_dirs))
 
 
-def load(pkl_dir, pkl_name):
+def load(pkl_dir, pkl_name, sub_dirs=None):
     """Load a pickle.
 
     Args:
       pkl_dir: String, the directory in which to save the pickle.
       pkl_name: String, the file_name for the pickle.
+      sub_dirs: List of String subdirectories to append after the pkl_dir and
+        before the name. Defaults to None.
 
     Returns:
       Object.
@@ -29,25 +33,42 @@ def load(pkl_dir, pkl_name):
     Raises:
       Exception if pickle not found.
     """
-    file_path = os.path.join(pkl_dir, pkl_name)
+    path = pkl_path(pkl_dir, pkl_name, sub_dirs)
     try:
-        with open(file_path, 'rb') as file:
+        with open(path, 'rb') as file:
             obj = pickle.load(file)
             return obj
     except FileNotFoundError:
-        raise Exception('Pickle not found: %s' % file_path)
+        raise Exception('Pickle not found: %s' % path)
 
 
-def save(obj, pkl_dir, pkl_name):
+def pkl_path(pkl_dir, name, sub_dirs=None):
+    """Helper function for file paths.
+
+    Args:
+      pkl_dir: String, the base directory.
+      name: String, file name without .pkl.
+      sub_dirs: List of String subdirectories to append after the pkl_dir and
+        before the name. Defaults to None.
+
+    Returns:
+      String.
+    """
+    return os.path.join(pkl_dir, '/'.join(sub_dirs), name + '.pkl')
+
+
+def save(obj, pkl_dir, pkl_name, sub_dirs=None):
     """Save a pickle.
 
     Args:
       obj: Object, the object to pickle.
       pkl_dir: String, the directory in which to save the pickle.
       pkl_name: String, the file_name for the pickle.
+      sub_dirs: List of String subdirectories to append after the pkl_dir and
+        before the name. Defaults to None.
     """
-    file_path = os.path.join(pkl_dir, pkl_name)
-    with open(file_path, 'wb') as file:
+    path = pkl_path(pkl_dir, pkl_name, sub_dirs)
+    with open(path, 'wb') as file:
         pickle.dump(obj, file)
 
 
@@ -63,33 +84,39 @@ class Pickler:
         """
         self.pkl_dir = pkl_dir
 
-    def exists(self, name):
+    def exists(self, pkl_name, sub_dirs=None):
         """Check if a pickle exists.
 
         Args:
-          name: String. Should NOT have .pkl at the end.
+          pkl_name: String. Should NOT have .pkl at the end.
+          sub_dirs: List of String subdirectories to append after the pkl_dir
+            and before the name. Defaults to None.
 
         Returns:
           Bool.
         """
-        return exists(self.pkl_dir, name + '.pkl')
+        return exists(self.pkl_dir, pkl_name + '.pkl', sub_dirs)
 
-    def file_path(self, name):
+    def file_path(self, pkl_name, sub_dirs=None):
         """Get the file path to a pickle given by name.
 
         Args:
-          name: String. Should NOT have .pkl at the end.
+          pkl_name: String. Should NOT have .pkl at the end.
+          sub_dirs: List of String subdirectories to append after the pkl_dir
+            and before the name. Defaults to None.
 
         Returns:
           String.
         """
-        return os.path.join(self.pkl_dir, name + '.pkl')
+        return pkl_path(self.pkl_dir, pkl_name, sub_dirs)
 
-    def load(self, name):
+    def load(self, pkl_name, sub_dirs=None):
         """Load a pickle.
 
         Args:
-          name: String. Should NOT have .pkl at the end.
+          pkl_name: String. Should NOT have .pkl at the end.
+          sub_dirs: List of String subdirectories to append after the pkl_dir
+            and before the name. Defaults to None.
 
         Returns:
           Object.
@@ -97,13 +124,15 @@ class Pickler:
         Raises:
           Exception if pickle not found.
         """
-        return load(self.pkl_dir, name + '.pkl')
+        return load(self.pkl_dir, pkl_name + '.pkl', sub_dirs)
 
-    def save(self, obj, name):
+    def save(self, obj, pkl_name, sub_dirs=None):
         """Save a pickle.
 
         Args:
           obj: Object.
-          name: String. Should NOT have .pkl at the end.
+          pkl_name: String. Should NOT have .pkl at the end.
+          sub_dirs: List of String subdirectories to append after the pkl_dir
+            and before the name. Defaults to None.
         """
-        save(obj, self.pkl_dir, name + '.pkl')
+        save(obj, self.pkl_dir, pkl_name + '.pkl', sub_dirs)

@@ -13,10 +13,9 @@ Notes:
 from nltk.corpus import wordnet as wn
 import glovar
 import os
-import pandas as pd
 
 
-DEFAULT_FILE_PATH = os.path.join(glovar.DATA_DIR, 'wordnet.csv')
+DEFAULT_FILE_PATH = os.path.join(glovar.DATA_DIR, 'wordnet', 'wordnet.csv')
 
 
 def transitive_closure(synsets):
@@ -32,7 +31,7 @@ def generate_wordnet(target=DEFAULT_FILE_PATH):
     """Generates wordnet data.
 
     Args:
-      target: String. Defaults to glovar.DATA_DIR + 'wordnet.csv'.
+      target: String. Defaults to glovar.DATA_DIR/wordnet/wordnet.csv.
     """
     print('Generating WordNet synsets and writing to %r' % target)
     words = wn.words()
@@ -43,13 +42,9 @@ def generate_wordnet(target=DEFAULT_FILE_PATH):
     print('Getting transitive closure...')
     hypernyms = list(transitive_closure(nouns))
     print('Writing file...')
+    os.makedirs(os.path.dirname(target), exist_ok=True)
     with open(target, 'w') as file:
+        file.write('child,parent\n')
         for n1, n2 in hypernyms:
             file.write('%s,%s\n' % (n1.name(), n2.name()))
     print('Success.')
-
-
-def get_wordnet(target=DEFAULT_FILE_PATH):
-    df = pd.read_csv(target, header=None, sep=',')
-    df.columns = ['child', 'parent']
-    return df

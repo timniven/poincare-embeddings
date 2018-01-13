@@ -1,5 +1,5 @@
 # Project specific
-data/
+data/wordnet/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

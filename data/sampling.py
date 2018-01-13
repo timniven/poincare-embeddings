@@ -1,5 +1,5 @@
 """Samplers for data preparation."""
-from poincare import data
+from poincare import preprocess
 import numpy as np
 import random
 
@@ -37,7 +37,7 @@ class Sampler:
           mode: String in {}, determining sampling strategy.
           num_negs: Integer, the number of negative examples to sample.
         """
-        self.adj_mat = data.get_adjacency(dataset_name, mode)
+        self.adj_mat = preprocess.get_adjacency(dataset_name, mode)
         self.num_negs = num_negs
         self.n_words = self.adj_mat.shape[0]
         self.pos_pairs = self.get_pos_pairs()
