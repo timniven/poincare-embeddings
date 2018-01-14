@@ -151,13 +151,15 @@ class Dataset(dataset.Dataset):
 class Collator:
     """Collate function for training."""
 
-    def __init__(self, sampler):
+    def __init__(self, sampler, vocab):
         """Create a new Collator.
 
         Args:
           sampler: data.sampling.Sampler.
+          vocab: data.preprocess.Vocab.
         """
         self.sampler = sampler
+        self.vocab = vocab
 
     def __call__(self, data):
         """Execute collate function.
@@ -169,7 +171,9 @@ class Collator:
           Tuple (u_ix, v_ix, [neg_ixs]).
         """
         u, v = data[0]
-        return u, v, self.sampler(u)
+        negs = ' '.join([self.vocab[n] for n in self.sampler(u)])
+        #print('%s => %s ; %s' % (u, v, negs))
+        return self.vocab[u], self.vocab[v], self.sampler(u)
 
 
 def get_data_loader(data, collator, batch_size=1, shuffle=False):
@@ -190,5 +194,5 @@ def get_data_loader(data, collator, batch_size=1, shuffle=False):
         data,
         batch_size,
         shuffle=shuffle,
-        num_workers=4,
+        num_workers=2,
         collate_fn=collator)

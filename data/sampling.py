@@ -98,7 +98,7 @@ class Sampler:
         Returns:
           List of integer indices representing negative samples.
         """
-        neg_ixs = [self.vocab[u]]
+        neg_ixs = []
         ruled_out = self.get_ruled_out(u)
         num_negs = min(self.num_negs, len(self.vocab) - len(ruled_out))
         while len(neg_ixs) != num_negs:

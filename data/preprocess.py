@@ -32,6 +32,15 @@ import shutil
 
 
 #
+# Data creation from adjacency matrix
+
+
+def create_and_preprocess(adj_mat):
+    # TODO: this helpful for quick testing
+    pass
+
+
+#
 # Master pre-process function
 
 

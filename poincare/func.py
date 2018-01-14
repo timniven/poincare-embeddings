@@ -50,7 +50,7 @@ def poincare_distance(u, v):
     if v.dim() == 1:
         v = v.unsqueeze(0)
 
-    uu = u.t().dot(u)
+    uu = u.norm(dim=1) ** 2
     # v is sometimes a matrix of negs
     vv = v.norm(dim=1) ** 2  # so norm then square instead of dot product
     uv = u.mm(v.t())  # this works for both vector and matrix case
@@ -58,8 +58,9 @@ def poincare_distance(u, v):
     alpha = (1 - uu).clamp(min=glovar.EPS, max=1 - glovar.EPS)
     beta = (1 - vv).clamp(min=glovar.EPS, max=1 - glovar.EPS)
     # remembering that the domain of arcosh is [1, +inf]
-    gamma = (1 + 2 * numerator / alpha / beta).clamp(min=1.)
+    gamma = (1 + 2 * numerator / alpha / beta).clamp(min=1. + glovar.EPS)
     distance = arcosh(gamma)
+
     return distance
 
 

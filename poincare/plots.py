@@ -24,7 +24,7 @@ def plot_embs(embs, vocab):
     circle = plt.Circle((0, 0), 1., color='black', fill=False)
     ax.add_artist(circle)
 
-    for word, ix in vocab.items():
+    for word, ix in vocab.ix.items():
         x, y = embs[ix]
         ax.plot(x, y, 'o', color='y')
         ax.text(x+0.001, y+0.001, word, color='b', alpha=0.6)
@@ -58,7 +58,7 @@ def plot_change(embs1, embs2, changed_ixs, vocab):
     colorspace = ['b', 'r', 'y', 'g', 'c', 'm', 'k']
 
     i = -1
-    for word, ix in vocab.items():
+    for word, ix in vocab.ix.items():
         if ix in changed_ixs:
             i += 1
             x1, y1 = embs1[ix]
