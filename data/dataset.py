@@ -18,53 +18,66 @@ class Dataset(dataset.Dataset):
     chunk index then a local index in the chunk.
     """
 
-    def __init__(self, dataset_name, data_size):
+    def __init__(self, dataset_name):
         """Create a new Dataset.
 
         Args:
           dataset_name: String.
-          data_size: Integer.
         """
-        # Master variables
         self.dataset_name = dataset_name
         self.num_chunks = pp.count_chunks(dataset_name)
-        self.data_size = data_size
-        self.chunk_size =
-
-        # Epoch specific variables
-        self.chunk_ixs = list(range(self.num_chunks))
-        self.current_chunk = list(pp.get_chunk(dataset_name, 0))
-        self.local_len = len(self.current_chunk)
-        self.local_ixs = list(range(self.local_len))
-        self.chunk_i = 0
-        self.local_i = 0
-        self.global_i = 0
+        self.data_size = pp.data_size(dataset_name)
+        self.chunk_size, self.last_chunk_size = pp.chunk_size(dataset_name)
+        self.vocab = pp.get_vocab(dataset_name)
+        self.i = 0
+        self.chunk_ixs = list(range(self.num_chunks))      # for chunk selection
+        self.local_ixs = list(range(self.chunk_size))      # ixs within chunk
+        self.last_ixs = list(range(self.last_chunk_size))  # ixs in last chunk
+        random.shuffle(self.chunk_ixs)
+        random.shuffle(self.local_ixs)
+        random.shuffle(self.last_ixs)
 
     def __getitem__(self, item):
-        # get item
-        data = self.next_item()
-        self.local_i += 1
-        self.global_i += 1
-        if self.end_epoch():
-            self.new_epoch()
+        """Get the next item.
+
+        Find the correct randomized bin for the item, loads bin, returns u and
+        v, then deletes the bin from memory.
+
+        Args:
+          item: will be an integer index.
+
+        Returns:
+          Tuple (Integer u, Integer v), representing one observed relationship
+            in the data. This will then be given to the collate function which
+            will refer to the Sampler to find the negative samples.
+        """
+        # Map the index to a chunk
+        chunk_ix = item % self.chunk_size
+        chunk = pp.get_chunk(self.dataset_name, chunk_ix)
+
+        # Use the randomized local mapping to find the local item
+        if chunk_ix == self.chunk_size - 1:
+            local_ix = self.last_ixs[item - self.chunk_size * chunk_ix]
         else:
-            if self.end_chunk():
-                self.new_chunk()
-        return data
+            local_ix = self.local_ixs[item - self.chunk_size * chunk_ix]
+
+        # Obtain the words and delete the chunk
+        u, v = chunk.iloc[local_ix]
+        del chunk
+
+        # Iterate the global counter
+        self.i += 1
+
+        # Reshuffle and reset when the epoch ends
+        if self.i == self.data_size:
+            self.i = 0
+            random.shuffle(self.chunk_ixs)
+            random.shuffle(self.local_ixs)
+            random.shuffle(self.last_ixs)
+        return u, v
 
     def __len__(self):
         return self.data_size
-
-    def end_epoch(self):
-        """Determines if the current epoch is over.
-
-        self.global_i gets iterated after retrieval of an item, so this check
-        is performed after that in the __getitem__ method.
-        """
-        return self.global_i == self.data_size - 1
-
-    def new_epoch(self):
-        pass
 
 
 class Collator:
@@ -108,6 +121,6 @@ def get_data_loader(dataset, collator, batch_size=1, shuffle=False):
     return dataloader.DataLoader(
         dataset,
         batch_size,
-        shuffle=False,
+        shuffle=shuffle,
         num_workers=4,
         collate_fn=collator)
