@@ -168,15 +168,15 @@ class Collator:
         Returns:
           Tuple (u_ix, v_ix, [neg_ixs]).
         """
-        u, v = data
+        u, v = data[0]
         return u, v, self.sampler(u)
 
 
-def get_data_loader(dataset, collator, batch_size=1, shuffle=False):
+def get_data_loader(data, collator, batch_size=1, shuffle=False):
     """Get a DataLoader.
 
     Args:
-      dataset: torch.utils.data.dataset.Dataset.
+      data: torch.utils.data.dataset.Dataset.
       collator: collate function.
       batch_size: Integer, defaults to 1.
       shuffle: Bool, whether to shuffle. Defaulted to False since I implemented
@@ -187,7 +187,7 @@ def get_data_loader(dataset, collator, batch_size=1, shuffle=False):
       torch.utils.data.dataloader.DataLoader
     """
     return dataloader.DataLoader(
-        dataset,
+        data,
         batch_size,
         shuffle=shuffle,
         num_workers=4,

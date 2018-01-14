@@ -52,20 +52,19 @@ import random
 class Sampler:
     """For getting negative samples."""
 
-    def __init__(self, dataset_name, vocab, mode, num_negs):
+    def __init__(self, dataset_name, mode, num_negs):
         """Create a new Sampler.
 
         Args:
           dataset_name: String.
-          vocab: data.preprocess.Vocab.
           mode: String in {up, down, both}.
           num_negs: Integer, the number of negatives to sample for each word.
         """
         self.dataset_name = dataset_name
-        self.vocab = vocab
+        self.vocab = preprocess.get_vocab(dataset_name)
         self.mode = mode
         self.num_negs = num_negs
-        self.all_ixs = list(range(len(vocab)))
+        self.all_ixs = list(range(len(self.vocab)))
 
     def __call__(self, u):
         return self.sample_neg_ixs(u)
@@ -86,7 +85,7 @@ class Sampler:
         elif self.mode == 'down':
             return relatives['down']
         elif self.mode == 'both':
-            return relatives['up'] + relatives['down']
+            return list(relatives['up']) + list(relatives['down'])
         else:
             raise ValueError('Unrecognized mode: %r' % self.mode)
 
