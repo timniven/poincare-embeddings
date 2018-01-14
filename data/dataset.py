@@ -2,6 +2,7 @@
 from torch.utils.data import dataset, dataloader
 from data import preprocess as pp
 import random
+import numpy as np
 
 
 class Dataset(dataset.Dataset):
@@ -51,18 +52,22 @@ class Dataset(dataset.Dataset):
             in the data. This will then be given to the collate function which
             will refer to the Sampler to find the negative samples.
         """
-        # Map the index to a chunk
-        chunk_ix = item % self.chunk_size
-        chunk = pp.get_chunk(self.dataset_name, chunk_ix)
+        # Map the index to chunk and local ixs without considering randomization
+        chunk_ix = int(np.floor(item / self.chunk_size))
+        local_ix = item - self.chunk_size * chunk_ix
 
-        # Use the randomized local mapping to find the local item
+        # Get the randomized chunk_ix and load the chunk
+        rand_chunk_ix = self.chunk_ixs[chunk_ix]
+        chunk = pp.get_chunk(self.dataset_name, rand_chunk_ix)
+
+        # Get random local ix and find the local item
         if chunk_ix == self.chunk_size - 1:
-            local_ix = self.last_ixs[item - self.chunk_size * chunk_ix]
+            rand_local_ix = self.last_ixs[local_ix]
         else:
-            local_ix = self.local_ixs[item - self.chunk_size * chunk_ix]
-
-        # Obtain the words and delete the chunk
+            rand_local_ix = self.local_ixs[local_ix]
         u, v = chunk.iloc[local_ix]
+
+        # Delete the chunk
         del chunk
 
         # Iterate the global counter

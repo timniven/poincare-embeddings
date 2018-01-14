@@ -150,7 +150,8 @@ def chunk_size(dataset_name):
     num_chunks = count_chunks(dataset_name)
     dataset_size = data_size(dataset_name)
     last_chunk = get_chunk(dataset_name, num_chunks - 1)
-    return int((dataset_size - len(last_chunk)) / (num_chunks - 1))
+    return int((dataset_size - len(last_chunk)) / (num_chunks - 1)), \
+           len(last_chunk)
 
 
 def count_chunks(dataset_name):
