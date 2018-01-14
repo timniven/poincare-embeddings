@@ -28,46 +28,43 @@ class Dataset(dataset.Dataset):
         self.dataset_name = dataset_name
         self.num_chunks = pp.count_chunks(dataset_name)
         self.data_size = pp.data_size(dataset_name)
-        self.chunk_size, self.last_chunk_size = pp.chunk_size(dataset_name)
+        self.chunk_size, self.small_chunk_size = pp.chunk_size(dataset_name)
         self.vocab = pp.get_vocab(dataset_name)
         self.i = 0
         self.chunk_ixs = list(range(self.num_chunks))      # for chunk selection
         self.local_ixs = list(range(self.chunk_size))      # ixs within chunk
-        self.last_ixs = list(range(self.last_chunk_size))  # ixs in last chunk
-        random.shuffle(self.chunk_ixs)
-        random.shuffle(self.local_ixs)
-        random.shuffle(self.last_ixs)
+        self.small_ixs = list(range(self.small_chunk_size))  # ixs in last chunk
+        self.shuffle()
 
-    def __getitem__(self, item):
+    def __getitem__(self, ix):
         """Get the next item.
 
         Find the correct randomized bin for the item, loads bin, returns u and
         v, then deletes the bin from memory.
 
         Args:
-          item: will be an integer index.
+          ix: will be an integer index.
 
         Returns:
           Tuple (Integer u, Integer v), representing one observed relationship
             in the data. This will then be given to the collate function which
             will refer to the Sampler to find the negative samples.
         """
-        # Map the index to chunk and local ixs without considering randomization
-        chunk_ix = int(np.floor(item / self.chunk_size))
-        local_ix = item - self.chunk_size * chunk_ix
-
-        # Get the randomized chunk_ix and load the chunk
+        # Considering the small chunk could be anywhere, map the incoming ix
+        # to a chunk, and on that basis select the random chunk index
+        chunk_ix, small_status = self.get_chunk_ix(ix)
         rand_chunk_ix = self.chunk_ixs[chunk_ix]
-        chunk = pp.get_chunk(self.dataset_name, rand_chunk_ix)
 
-        # Get random local ix and find the local item
-        if chunk_ix == self.chunk_size - 1:
-            rand_local_ix = self.last_ixs[local_ix]
+        # Get the index we want inside the chunk
+        local_ix = self.get_local_ix(ix, chunk_ix, small_status)
+        if small_status == 'in':
+            rand_local_ix = self.small_ixs[local_ix]
         else:
             rand_local_ix = self.local_ixs[local_ix]
-        u, v = chunk.iloc[local_ix]
 
-        # Delete the chunk
+        # Get the chunk and record, then delete chunk
+        chunk = pp.get_chunk(self.dataset_name, rand_chunk_ix)
+        u, v = chunk.iloc[rand_local_ix]
         del chunk
 
         # Iterate the global counter
@@ -76,13 +73,79 @@ class Dataset(dataset.Dataset):
         # Reshuffle and reset when the epoch ends
         if self.i == self.data_size:
             self.i = 0
-            random.shuffle(self.chunk_ixs)
-            random.shuffle(self.local_ixs)
-            random.shuffle(self.last_ixs)
+            self.shuffle()
+
         return u, v
 
     def __len__(self):
         return self.data_size
+
+    def get_chunk_ix(self, ix):
+        """Get the chunk index.
+
+        A simple view would use:
+          int(np.floor(item / self.chunk_size))
+        but the problem is we don't know where the shorter, final chunk is in
+        the randomized chunk order.
+
+        We therefore require this method to perform that more complicated
+        calculation. It is simpler here thanks to small_chunk_bounds being pre-
+        calculated with each random shuffle.
+
+        Args:
+          ix: Integer, the index passed to __getitem__.
+
+        Returns:
+          (Integer ix, String small_status). The small status tells the status
+            of the small chunk in relation to this index. Options are 'before',
+            'in', or 'after'. This facilitates other computations later.
+        """
+        if ix < self.small_chunk_start:
+            return int(np.floor(ix / self.chunk_size)), 'before'
+        elif ix < self.small_chunk_end:
+            return self.small_chunk_pos, 'in'
+        else:
+            prev_count = (self.small_chunk_pos - 1) * self.chunk_size \
+                         + self.small_chunk_size
+            remaining = ix - prev_count
+            return self.small_chunk_pos \
+                   + int(np.floor(remaining / self.chunk_size)), \
+                   'after'
+
+    def get_local_ix(self, ix, chunk_ix, small_status):
+        """Get local index, having already decided which chunk to choose from.
+
+        Args:
+          ix: Integer.
+          chunk_ix: Integer.
+          small_status: String in {before, in, after}.
+
+        Returns:
+          Integer.
+        """
+        if small_status == 'after':
+            return (ix - self.small_chunk_size) % self.chunk_size
+        else:
+            return ix - (self.chunk_size * chunk_ix)
+
+    def shuffle(self):
+        """Perform random shuffling."""
+        random.shuffle(self.chunk_ixs)
+        random.shuffle(self.local_ixs)
+        random.shuffle(self.small_ixs)
+        # For later calculations: store the ixs of small chunk start and end
+        self.small_chunk_pos = np.argmax(self.chunk_ixs)
+        self.small_chunk_start, self.small_chunk_end = self.small_chunk_bounds()
+
+    def small_chunk_bounds(self):
+        """Get start and end indices of the small chunk in randomized order.
+
+        Returns:
+          (Integer start, Integer end).
+        """
+        start = int((self.small_chunk_pos) * self.chunk_size)
+        end = start + self.small_chunk_size
+        return start, end
 
 
 class Collator:
