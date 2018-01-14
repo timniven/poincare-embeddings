@@ -137,6 +137,22 @@ def chunk_path(dataset_name, j):
         glovar.DATA_DIR, dataset_name, 'chunks', '%s%s.pkl' % (dataset_name, j))
 
 
+def chunk_size(dataset_name):
+    """Get the size of the chunks.
+
+    Args:
+      dataset_name: String.
+
+    Returns:
+      Integer, Integer. The first is the defined chunk size, the second is the
+        size of the last chunk (that will be smaller than the defined size).
+    """
+    num_chunks = count_chunks(dataset_name)
+    dataset_size = data_size(dataset_name)
+    last_chunk = get_chunk(dataset_name, num_chunks - 1)
+    return int((dataset_size - len(last_chunk)) / (num_chunks - 1))
+
+
 def count_chunks(dataset_name):
     """Count how many chunks there are for a dataset.
 

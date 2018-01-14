@@ -29,6 +29,7 @@ class Dataset(dataset.Dataset):
         self.dataset_name = dataset_name
         self.num_chunks = pp.count_chunks(dataset_name)
         self.data_size = data_size
+        self.chunk_size =
 
         # Epoch specific variables
         self.chunk_ixs = list(range(self.num_chunks))
@@ -54,14 +55,6 @@ class Dataset(dataset.Dataset):
     def __len__(self):
         return self.data_size
 
-    def end_chunk(self):
-        """Determines if the current chunk is over.
-
-        self.local_i gets iterated after retrieval of an item, so this check
-        is performed after that in the __getitem__ method.
-        """
-        return self.local_i == self.local_len - 1
-
     def end_epoch(self):
         """Determines if the current epoch is over.
 
@@ -69,10 +62,6 @@ class Dataset(dataset.Dataset):
         is performed after that in the __getitem__ method.
         """
         return self.global_i == self.data_size - 1
-
-    def new_chunk(self):
-        self.chunk_i += 1
-        self.current_chunk = list(pp.get_chunk(self.dataset_name, self.chunk_i))
 
     def new_epoch(self):
         pass
