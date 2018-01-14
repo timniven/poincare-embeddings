@@ -79,6 +79,26 @@ def data_file_path(dataset_name):
     return os.path.join(glovar.DATA_DIR, dataset_name, dataset_name + '.csv')
 
 
+def data_size(dataset_name):
+    """Get the size of a dataset.
+
+    Will load the chunks one by one and increment the count. Will also delete
+    the chunks, freeing memory upon completion.
+
+    Args:
+      dataset_name: String.
+
+    Returns:
+      Integer.
+    """
+    size = 0
+    for j in range(count_chunks(dataset_name)):
+        chunk = get_chunk(dataset_name, j)
+        size += len(chunk)
+        del chunk
+    return size
+
+
 def get_df(dataset_name, chunk_size=10000):
     """Get the dataframe for a dataset.
 

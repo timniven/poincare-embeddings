@@ -11,15 +11,20 @@ class Dataset(dataset.Dataset):
     strategy, this class wraps access to the dataset, potentially chunked for
     memory efficiency.
 
-    Notes:
-    - Randomize order of chunks, then order of rows in the chunks.
-    - Designed for use with a PyTorch DataLoader during training.
-    - Negative sampling responsibility of Collator in DataLoader, not here.
-      Here we are principally concerned with randomizing the order of the
-      potentially chunked data.
+    Here we are principally concerned with randomizing the order of the
+    potentially chunked data.
+
+    The data is accessed from this class by index, so we need to map this to a
+    chunk index then a local index in the chunk.
     """
 
     def __init__(self, dataset_name, data_size):
+        """Create a new Dataset.
+
+        Args:
+          dataset_name: String.
+          data_size: Integer.
+        """
         # Master variables
         self.dataset_name = dataset_name
         self.num_chunks = pp.count_chunks(dataset_name)
